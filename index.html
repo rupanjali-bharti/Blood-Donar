@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donor Finder</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #map { height: 400px; width: 80%; margin: auto; }
+        input, button { margin: 10px; padding: 10px; }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+
+</head>
+<body>
+
+    <h1>Find a Blood Donor</h1>
+
+    <label for="bloodType">Blood Type:</label>
+    <select id="bloodType">
+        <option value="O+">O+</option>
+        <option value="A+">A+</option>
+        <option value="B+">B+</option>
+        <option value="AB+">AB+</option>
+        <option value="O-">O-</option>
+        <option value="A-">A-</option>
+        <option value="B-">B-</option>
+        <option value="AB-">AB-</option>
+    </select>
+
+    <br>
+    <button onclick="getUserLocation()">Find Donors Near Me</button>
+
+    <h2>Donor Locations:</h2>
+    <div id="map">
+        <iframe
+            width="600"
+            height="450"
+            style="border:0"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps/embed/v1/place?key=API_KEY
+                &q=Space+Needle,Seattle+WA">
+            </iframe>
+    </div>
+    <div id="results"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let donorMarkers = [];
+
+        function initMap(lat = 40.7128, lon = -74.0060) {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: lat, lng: lon },
+                zoom: 12
+            });
+
+            userMarker = new google.maps.Marker({
+                position: { lat: lat, lng: lon },
+                map: map,
+                title: "You are here",
+                icon: "https://www.google.com/maps/embed/v1/place?key=API_KEY&q=Space+Needle,Seattle+WA"
+            });
+        }
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    initMap(lat, lon);
+                    findDonors(lat, lon);
+                }, () => {
+                    alert("Geolocation failed. Please enter location manually.");
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        }
+
+        async function findDonors(lat, lon) {
+            const bloodType = document.getElementById("bloodType").value;
+            
+            
+        }
+
+        function displayDonors(donors, userLat, userLon) {
+            donorMarkers.forEach(marker => marker.setMap(null)); // Clear previous markers
+            donorMarkers = [];
+
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+
+            if (donors.length === 0) {
+                resultsDiv.innerHTML = "<p>No donors found nearby.</p>";
+                return;
+            }
+
+            donors.forEach(donor => {
+                const donorLat = donor.location[0];
+                const donorLon = donor.location[1];
+
+                const marker = new google.maps.Marker({
+                    position: { lat: donorLat, lng: donorLon },
+                    map: map,
+                    title: `Donor: ${donor.name}, Blood Type: ${donor.blood_type}`
+                });
+
+                donorMarkers.push(marker);
+
+                resultsDiv.innerHTML += `
+                    <p><strong>${donor.name}</strong> - ${donor.blood_type} <br>
+                    Location: (${donorLat}, ${donorLon})</p>
+                    <hr>
+                `;
+            });
+
+            // Fit map to show user and donors
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(new google.maps.LatLng(userLat, userLon));
+            donors.forEach(donor => bounds.extend(new google.maps.LatLng(donor.location[0], donor.location[1])));
+            map.fitBounds(bounds);
+        }
+
+        // Initialize default map
+        initMap();
+    </script>
+
+</body>
+</html>
